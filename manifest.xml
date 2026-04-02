@@ -12,11 +12,11 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Template Pro"/>
   <Description DefaultValue="Unlimited email templates for Outlook — store, manage, and insert rich templates with no size restrictions."/>
-  <IconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/assets/icon-64.png"/>
-  <HighResolutionIconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-128.png"/>
   <SupportUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/support"/>
   <AppDomains>
-    <AppDomain>https://cosagjanderso.github.io/OutlookTemplatePro</AppDomain>
+    <AppDomain>https://cosagjanderso.github.io</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -81,9 +81,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Commands.Url" DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/commands.html"/>
