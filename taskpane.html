@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Template Pro</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f1117;
+      --surface:    #181c27;
+      --surface2:   #1e2335;
+      --border:     #2a3048;
+      --accent:     #4f7cff;
+      --accent2:    #7c5cfc;
+      --danger:     #ff4f6a;
+      --success:    #2dd97e;
+      --text:       #e8ecf5;
+      --text-muted: #6b7a9e;
+      --text-dim:   #3d4a6a;
+      --radius:     10px;
+      --font:       'DM Sans', sans-serif;
+      --mono:       'DM Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── LAYOUT ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .logo {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 14px; font-weight: 600; letter-spacing: -0.3px;
+      flex: 1;
+    }
+    header h1 span { color: var(--accent); }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; padding: 9px 0; text-align: center;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer; border: none; background: none;
+      border-bottom: 2px solid transparent;
+      transition: all .18s;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── PANELS ── */
+    .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .panel.active { display: flex; }
+
+    /* ── SEARCH BAR ── */
+    .search-bar {
+      padding: 10px 12px 8px;
+      flex-shrink: 0;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 7px 10px 7px 30px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap input::placeholder { color: var(--text-dim); }
+
+    /* ── CATEGORY CHIPS ── */
+    .chips {
+      display: flex; gap: 6px; padding: 0 12px 8px;
+      overflow-x: auto; flex-shrink: 0;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px; font-weight: 500;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .chip.active {
+      background: rgba(79,124,255,.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .chip:hover:not(.active) { border-color: var(--text-dim); color: var(--text); }
+
+    /* ── TEMPLATE LIST ── */
+    .list-scroll {
+      flex: 1; overflow-y: auto; padding: 0 12px 12px;
+    }
+    .list-scroll::-webkit-scrollbar { width: 4px; }
+    .list-scroll::-webkit-scrollbar-track { background: transparent; }
+    .list-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+    .empty-state p { font-size: 12px; line-height: 1.6; }
+
+    .template-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+    }
+    .template-card:hover {
+      border-color: rgba(79,124,255,.5);
+      background: var(--surface2);
+      transform: translateY(-1px);
+    }
+    .card-top {
+      display: flex; align-items: flex-start; gap: 8px; margin-bottom: 5px;
+    }
+    .card-top .name {
+      flex: 1; font-weight: 600; font-size: 12.5px; line-height: 1.3;
+    }
+    .card-top .cat-badge {
+      font-size: 10px; padding: 2px 7px;
+      border-radius: 10px; font-family: var(--mono);
+      background: rgba(79,124,255,.12); color: var(--accent);
+      border: 1px solid rgba(79,124,255,.25);
+      flex-shrink: 0;
+    }
+    .card-preview {
+      font-size: 11px; color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px;
+    }
+    .card-size {
+      font-size: 10px; color: var(--text-dim);
+      font-family: var(--mono);
+    }
+    .card-actions {
+      display: flex; gap: 4px; opacity: 0; transition: opacity .15s;
+    }
+    .template-card:hover .card-actions { opacity: 1; }
+    .btn-icon {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 7px;
+      font-size: 11px; cursor: pointer; color: var(--text-muted);
+      transition: all .15s;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .btn-insert {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 6px;
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      color: #fff; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-insert:hover { opacity: .85; }
+
+    /* ── EDITOR PANEL ── */
+    .editor-panel {
+      padding: 10px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 4px; }
+    .field-group label {
+      font-size: 11px; color: var(--text-muted); font-weight: 500;
+    }
+    .field-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12.5px;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+    }
+    .field-input:focus { border-color: var(--accent); }
+    .field-input.textarea {
+      resize: vertical;
+      min-height: 160px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.6;
+    }
+    select.field-input { cursor: pointer; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .editor-footer {
+      display: flex; gap: 8px; padding: 10px 12px 12px; flex-shrink: 0;
+      border-top: 1px solid var(--border);
+    }
+    .btn-primary {
+      flex: 1; padding: 9px; border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 600; font-size: 12.5px;
+      border-radius: var(--radius); cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-secondary {
+      padding: 9px 16px; border-radius: var(--radius);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 12.5px; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+      padding: 9px 16px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+      pointer-events: none; opacity: 0;
+      transition: opacity .25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { background: rgba(45,217,126,.15); border: 1px solid var(--success); color: var(--success); }
+    #toast.error   { background: rgba(255,79,106,.15);  border: 1px solid var(--danger);  color: var(--danger); }
+
+    /* ── CHAR COUNTER ── */
+    .char-counter {
+      text-align: right; font-size: 10px;
+      font-family: var(--mono); color: var(--text-dim);
+    }
+    .char-counter.warn { color: #f5a623; }
+
+    /* ── IMPORT/EXPORT ── */
+    .settings-panel {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .settings-section h3 {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .8px;
+      margin-bottom: 8px;
+    }
+    .settings-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .btn-full {
+      width: 100%; padding: 9px; border-radius: var(--radius);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-size: 12px; font-weight: 500;
+      cursor: pointer; text-align: center;
+      transition: all .15s;
+    }
+    .btn-full:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-full.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px;
+    }
+    .stat-card .val {
+      font-size: 20px; font-weight: 600;
+      font-family: var(--mono);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-card .lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── CATEGORY MANAGE ── */
+    .cat-list { display: flex; flex-direction: column; gap: 6px; }
+    .cat-item {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 7px 10px;
+    }
+    .cat-item span { flex: 1; font-size: 12px; }
+    .cat-new-row { display: flex; gap: 6px; }
+    .cat-new-row input {
+      flex: 1;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: var(--font); font-size: 12px;
+      padding: 7px 10px; outline: none;
+    }
+    .cat-new-row input:focus { border-color: var(--accent); }
+    .btn-add-cat {
+      padding: 7px 12px; border-radius: var(--radius);
+      background: rgba(79,124,255,.15); border: 1px solid rgba(79,124,255,.3);
+      color: var(--accent); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+    }
+    .btn-add-cat:hover { background: rgba(79,124,255,.25); }
+
+    /* ── VARIABLES HINT ── */
+    .vars-hint {
+      background: rgba(79,124,255,.07);
+      border: 1px solid rgba(79,124,255,.2);
+      border-radius: var(--radius); padding: 8px 10px;
+    }
+    .vars-hint p { font-size: 11px; color: var(--text-muted); line-height: 1.7; }
+    .vars-hint code {
+      font-family: var(--mono); font-size: 10.5px;
+      background: rgba(79,124,255,.15);
+      padding: 1px 5px; border-radius: 4px;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">✦</div>
+    <h1>Template <span>Pro</span></h1>
+    <span id="header-count" style="font-size:11px;color:var(--text-dim);font-family:var(--mono)"></span>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('browse')">Browse</button>
+    <button class="tab" onclick="switchTab('editor')">+ New</button>
+    <button class="tab" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <!-- BROWSE TAB -->
+  <div class="panel active" id="panel-browse">
+    <div class="search-bar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search templates…" oninput="renderList()">
+      </div>
+    </div>
+    <div class="chips" id="chips-container"></div>
+    <div class="list-scroll" id="template-list"></div>
+  </div>
+
+  <!-- EDITOR TAB -->
+  <div class="panel" id="panel-editor">
+    <div class="editor-panel" id="editor-form">
+      <input type="hidden" id="edit-id">
+      <div class="field-group">
+        <label>Template Name *</label>
+        <input type="text" class="field-input" id="edit-name" placeholder="e.g. Follow-up after meeting">
+      </div>
+      <div class="row-2">
+        <div class="field-group">
+          <label>Category</label>
+          <select class="field-input" id="edit-category"></select>
+        </div>
+        <div class="field-group">
+          <label>Format</label>
+          <select class="field-input" id="edit-format">
+            <option value="html">HTML (rich)</option>
+            <option value="text">Plain Text</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Subject Line (optional)</label>
+        <input type="text" class="field-input" id="edit-subject" placeholder="e.g. Following up on our conversation">
+      </div>
+      <div class="field-group">
+        <label>Body *</label>
+        <textarea class="field-input textarea" id="edit-body" placeholder="Template content…&#10;&#10;Use {{FirstName}}, {{Company}}, {{Date}} as dynamic variables." oninput="updateCharCount()"></textarea>
+        <div class="char-counter" id="char-counter">0 chars</div>
+      </div>
+      <div class="vars-hint">
+        <p>💡 Use dynamic variables: <code>{{FirstName}}</code> <code>{{LastName}}</code> <code>{{Company}}</code> <code>{{Date}}</code> <code>{{SenderName}}</code> — you'll be prompted to fill them in at insert time.</p>
+      </div>
+    </div>
+    <div class="editor-footer">
+      <button class="btn-secondary" onclick="cancelEdit()">Cancel</button>
+      <button class="btn-primary" onclick="saveTemplate()">Save Template</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-panel">
+      <div class="settings-section">
+        <h3>Storage</h3>
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Categories</h3>
+        <div class="cat-list" id="cat-list"></div>
+        <div class="cat-new-row" style="margin-top:8px">
+          <input type="text" id="new-cat-input" placeholder="New category name…">
+          <button class="btn-add-cat" onclick="addCategory()">Add</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Import / Export</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn-full" onclick="exportTemplates()">⬇ Export templates as JSON</button>
+          <label class="btn-full" style="cursor:pointer">
+            ⬆ Import templates from JSON
+            <input type="file" accept=".json" id="import-file" style="display:none" onchange="importTemplates(event)">
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Danger Zone</h3>
+        <button class="btn-full danger" onclick="clearAll()">🗑 Delete all templates</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- VARIABLE SUBSTITUTION MODAL -->
+<div id="var-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;width:calc(100% - 32px);max-width:360px">
+    <h2 style="font-size:14px;font-weight:600;margin-bottom:4px">Fill in Variables</h2>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:14px">Complete the dynamic fields for this template.</p>
+    <div id="var-fields" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" style="flex:1" onclick="closeVarModal()">Cancel</button>
+      <button class="btn-primary" style="flex:2" onclick="confirmInsert()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STORAGE — uses localStorage with JSON
+//  No 32KB limit: individual keys per template
+// ══════════════════════════════════════════
+
+const STORE_PREFIX   = 'tmplpro_t_';
+const CAT_KEY        = 'tmplpro_cats';
+const DEFAULT_CATS   = ['General', 'Sales', 'Support', 'HR', 'Legal', 'Finance', 'Marketing'];
+
+function getCategories() {
+  try { return JSON.parse(localStorage.getItem(CAT_KEY)) || DEFAULT_CATS; }
+  catch { return DEFAULT_CATS; }
+}
+function saveCategories(cats) { localStorage.setItem(CAT_KEY, JSON.stringify(cats)); }
+
+function getAllTemplates() {
+  const out = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(STORE_PREFIX)) {
+      try { out.push(JSON.parse(localStorage.getItem(k))); } catch {}
+    }
+  }
+  return out.sort((a,b) => (b.updated||0)-(a.updated||0));
+}
+
+function getTemplate(id) {
+  try { return JSON.parse(localStorage.getItem(STORE_PREFIX + id)); } catch { return null; }
+}
+
+function saveTemplateData(t) {
+  t.updated = Date.now();
+  localStorage.setItem(STORE_PREFIX + t.id, JSON.stringify(t));
+}
+
+function deleteTemplateData(id) {
+  localStorage.removeItem(STORE_PREFIX + id);
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let activeTab    = 'browse';
+let filterCat    = 'All';
+let editingId    = null;
+let pendingInsert = null; // { body, format }
+
+// ══════════════════════════════════════════
+//  OFFICE INIT
+// ══════════════════════════════════════════
+let officeReady = false;
+
+Office.onReady(function(info) {
+  officeReady = true;
+  init();
+});
+
+// Fallback for non-Office environments (dev/preview)
+if (typeof Office === 'undefined') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+
+function init() {
+  renderChips();
+  renderList();
+  populateCategorySelect();
+  renderSettings();
+}
+
+// ══════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['browse','editor','settings'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+
+  if (tab === 'editor' && !editingId) resetEditor();
+  if (tab === 'settings') renderSettings();
+}
+
+// ══════════════════════════════════════════
+//  BROWSE
+// ══════════════════════════════════════════
+function renderChips() {
+  const cats = ['All', ...getCategories()];
+  const el = document.getElementById('chips-container');
+  el.innerHTML = cats.map(c =>
+    `<button class="chip${filterCat===c?' active':''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setCat(cat) {
+  filterCat = cat;
+  renderChips();
+  renderList();
+}
+
+function renderList() {
+  const q = (document.getElementById('search-input')?.value||'').toLowerCase();
+  const templates = getAllTemplates().filter(t => {
+    const matchCat = filterCat === 'All' || t.category === filterCat;
+    const matchQ   = !q || t.name.toLowerCase().includes(q) || (t.body||'').toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  const el = document.getElementById('template-list');
+  const count = getAllTemplates().length;
+  document.getElementById('header-count').textContent = count + ' saved';
+
+  if (templates.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="icon">📭</div>
+      <p>${count===0?'No templates yet.<br>Click <strong>+ New</strong> to create your first one.':'No templates match your search.'}</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = templates.map(t => {
+    const preview = stripHtml(t.body||'').slice(0,100);
+    const size = formatSize(new Blob([t.body||'']).size);
+    return `<div class="template-card" onclick="insertTemplate('${t.id}')">
+      <div class="card-top">
+        <div class="name">${esc(t.name)}</div>
+        <div class="cat-badge">${esc(t.category||'General')}</div>
+      </div>
+      ${t.subject?`<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">📨 ${esc(t.subject)}</div>`:''}
+      <div class="card-preview">${esc(preview)}</div>
+      <div class="card-footer">
+        <span class="card-size">${size} · ${t.format==='html'?'HTML':'TXT'}</span>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon" onclick="editTemplate('${t.id}')">✏</button>
+          <button class="btn-icon" onclick="duplicateTemplate('${t.id}')">⧉</button>
+          <button class="btn-icon danger" onclick="removeTemplate('${t.id}')">✕</button>
+          <button class="btn-insert" onclick="insertTemplate('${t.id}')">Insert</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || html;
+}
+
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ══════════════════════════════════════════
+//  INSERT TEMPLATE
+// ══════════════════════════════════════════
+const KNOWN_VARS = ['FirstName','LastName','Company','Date','SenderName'];
+
+function insertTemplate(id) {
+  const t = getTemplate(id);
+  if (!t) return;
+
+  // Detect variables in body and subject
+  const combined = (t.body||'') + (t.subject||'');
+  const vars = [...new Set([...(combined.matchAll(/\{\{(\w+)\}\}/g))].map(m=>m[1]))];
+
+  if (vars.length > 0) {
+    openVarModal(t, vars);
+  } else {
+    doInsert(t, {});
+  }
+}
+
+function openVarModal(t, vars) {
+  pendingInsert = { t, vars };
+  const fieldsEl = document.getElementById('var-fields');
+  fieldsEl.innerHTML = vars.map(v => `
+    <div class="field-group">
+      <label>${v}</label>
+      <input class="field-input" data-var="${v}" type="text" placeholder="${getVarPlaceholder(v)}">
+    </div>
+  `).join('');
+
+  // Auto-fill Date
+  document.querySelectorAll('#var-fields input[data-var="Date"]').forEach(el => {
+    el.value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  });
+
+  // Try to auto-fill SenderName from Office
+  if (officeReady && Office.context?.mailbox?.userProfile?.displayName) {
+    document.querySelectorAll('#var-fields input[data-var="SenderName"]').forEach(el => {
+      el.value = Office.context.mailbox.userProfile.displayName;
+    });
+  }
+
+  document.getElementById('var-modal').style.display = 'flex';
+}
+
+function getVarPlaceholder(v) {
+  const map = {FirstName:'John',LastName:'Smith',Company:'Acme Corp',Date:'April 2, 2026',SenderName:'Your Name'};
+  return map[v] || v;
+}
+
+function closeVarModal() {
+  document.getElementById('var-modal').style.display = 'none';
+  pendingInsert = null;
+}
+
+function confirmInsert() {
+  if (!pendingInsert) return;
+  const vals = {};
+  document.querySelectorAll('#var-fields input').forEach(el => {
+    vals[el.dataset.var] = el.value;
+  });
+  closeVarModal();
+  doInsert(pendingInsert.t, vals);
+}
+
+function doInsert(t, vars) {
+  let body    = t.body || '';
+  let subject = t.subject || '';
+
+  // Replace variables
+  Object.entries(vars).forEach(([k,v]) => {
+    const re = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+    body    = body.replace(re, v);
+    subject = subject.replace(re, v);
+  });
+
+  if (!officeReady) {
+    toast('Inserted! (preview mode)', 'success');
+    return;
+  }
+
+  const item = Office.context.mailbox.item;
+
+  // Set subject if provided
+  if (subject && item.subject) {
+    item.subject.getAsync(r => {
+      if (!r.value) item.subject.setAsync(subject);
+    });
+  }
+
+  // Insert body
+  const insertType = t.format === 'html'
+    ? Office.CoercionType.Html
+    : Office.CoercionType.Text;
+
+  item.body.setSelectedDataAsync(body, { coercionType: insertType }, result => {
+    if (result.status === Office.AsyncResultStatus.Succeeded) {
+      toast('Template inserted ✓', 'success');
+      switchTab('browse');
+    } else {
+      toast('Insert failed: ' + result.error?.message, 'error');
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+//  EDITOR
+// ══════════════════════════════════════════
+function resetEditor() {
+  editingId = null;
+  document.getElementById('edit-id').value     = '';
+  document.getElementById('edit-name').value   = '';
+  document.getElementById('edit-subject').value= '';
+  document.getElementById('edit-body').value   = '';
+  document.getElementById('edit-format').value = 'html';
+  updateCharCount();
+  populateCategorySelect();
+}
+
+function populateCategorySelect() {
+  const sel = document.getElementById('edit-category');
+  if (!sel) return;
+  const cats = getCategories();
+  const cur  = sel.value;
+  sel.innerHTML = cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if (cats.includes(cur)) sel.value = cur;
+}
+
+function editTemplate(id) {
+  const t = getTemplate(id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('edit-id').value      = id;
+  document.getElementById('edit-name').value    = t.name || '';
+  document.getElementById('edit-subject').value = t.subject || '';
+  document.getElementById('edit-body').value    = t.body || '';
+  document.getElementById('edit-format').value  = t.format || 'html';
+  populateCategorySelect();
+  document.getElementById('edit-category').value = t.category || getCategories()[0];
+  updateCharCount();
+  switchTab('editor');
+}
+
+function cancelEdit() {
+  editingId = null;
+  resetEditor();
+  switchTab('browse');
+}
+
+function saveTemplate() {
+  const name = document.getElementById('edit-name').value.trim();
+  const body = document.getElementById('edit-body').value;
+  if (!name) { toast('Please enter a template name', 'error'); return; }
+  if (!body.trim()) { toast('Template body is empty', 'error'); return; }
+
+  const id = editingId || uid();
+  saveTemplateData({
+    id,
+    name,
+    category: document.getElementById('edit-category').value,
+    subject:  document.getElementById('edit-subject').value.trim(),
+    format:   document.getElementById('edit-format').value,
+    body,
+    created:  editingId ? (getTemplate(id)?.created || Date.now()) : Date.now()
+  });
+
+  toast(editingId ? 'Template updated ✓' : 'Template saved ✓', 'success');
+  editingId = null;
+  resetEditor();
+  renderList();
+  switchTab('browse');
+}
+
+function duplicateTemplate(id) {
+  const t = getTemplate(id);
+  if (!t) return;
+  saveTemplateData({ ...t, id: uid(), name: t.name + ' (copy)', created: Date.now() });
+  renderList();
+  toast('Template duplicated', 'success');
+}
+
+function removeTemplate(id) {
+  deleteTemplateData(id);
+  renderList();
+  toast('Template deleted', 'success');
+}
+
+function updateCharCount() {
+  const val = document.getElementById('edit-body')?.value||'';
+  const bytes = new Blob([val]).size;
+  const el = document.getElementById('char-counter');
+  el.textContent = `${val.length.toLocaleString()} chars · ${formatSize(bytes)}`;
+  el.classList.toggle('warn', bytes > 500*1024); // warn at 500KB
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+function renderSettings() {
+  const templates = getAllTemplates();
+  const cats = getCategories();
+  const totalBytes = templates.reduce((s,t)=>s+new Blob([t.body||'']).size,0);
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="val">${templates.length}</div><div class="lbl">Templates</div></div>
+    <div class="stat-card"><div class="val">${cats.length}</div><div class="lbl">Categories</div></div>
+    <div class="stat-card"><div class="val">${formatSize(totalBytes)}</div><div class="lbl">Total Size</div></div>
+    <div class="stat-card"><div class="val">∞</div><div class="lbl">No Limit</div></div>
+  `;
+
+  document.getElementById('cat-list').innerHTML = cats.map((c,i) =>
+    `<div class="cat-item">
+      <span>${esc(c)}</span>
+      <button class="btn-icon danger" onclick="removeCategory(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+function addCategory() {
+  const inp = document.getElementById('new-cat-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  const cats = getCategories();
+  if (cats.includes(val)) { toast('Category already exists', 'error'); return; }
+  cats.push(val);
+  saveCategories(cats);
+  inp.value = '';
+  renderSettings();
+  renderChips();
+  populateCategorySelect();
+  toast('Category added', 'success');
+}
+
+function removeCategory(i) {
+  const cats = getCategories();
+  cats.splice(i, 1);
+  saveCategories(cats);
+  renderSettings();
+  renderChips();
+  populateCategorySelect();
+  toast('Category removed', 'success');
+}
+
+function exportTemplates() {
+  const data = {
+    version: 1,
+    exported: new Date().toISOString(),
+    categories: getCategories(),
+    templates: getAllTemplates()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'template-pro-export.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported successfully', 'success');
+}
+
+function importTemplates(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      let count = 0;
+      if (Array.isArray(data.templates)) {
+        data.templates.forEach(t => { if (t.id && t.name) { saveTemplateData(t); count++; } });
+      }
+      if (Array.isArray(data.categories)) {
+        const existing = getCategories();
+        const merged = [...new Set([...existing, ...data.categories])];
+        saveCategories(merged);
+      }
+      renderList(); renderSettings(); renderChips(); populateCategorySelect();
+      toast(`Imported ${count} templates`, 'success');
+    } catch {
+      toast('Invalid JSON file', 'error');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm('Delete ALL templates? This cannot be undone.')) return;
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(STORE_PREFIX)) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  renderList(); renderSettings();
+  toast('All templates deleted', 'success');
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2400);
+}
+
+// ══════════════════════════════════════════
+//  SEED DEMO TEMPLATES (first run)
+// ══════════════════════════════════════════
+function seedDemoTemplates() {
+  if (getAllTemplates().length > 0) return;
+  const demos = [
+    {
+      id: uid(), name: 'Professional Introduction',
+      category: 'General', format: 'html',
+      subject: 'Introduction – {{SenderName}}',
+      body: `<p>Dear {{FirstName}},</p><p>My name is {{SenderName}} and I'm reaching out to introduce myself. I hope this message finds you well.</p><p>I would love to connect and explore opportunities to collaborate with {{Company}}.</p><p>Best regards,<br>{{SenderName}}</p>`
+    },
+    {
+      id: uid(), name: 'Meeting Follow-Up',
+      category: 'General', format: 'html',
+      subject: 'Following Up on Our Meeting – {{Date}}',
+      body: `<p>Hi {{FirstName}},</p><p>Thank you for taking the time to meet with me on {{Date}}. It was a pleasure discussing how we can support {{Company}}.</p><p>As promised, I'll send over the details we discussed. Please don't hesitate to reach out with any questions.</p><p>Looking forward to our next steps!</p><p>Best,<br>{{SenderName}}</p>`
+    },
+    {
+      id: uid(), name: 'Sales Proposal',
+      category: 'Sales', format: 'html',
+      subject: 'Proposal for {{Company}}',
+      body: `<p>Dear {{FirstName}},</p><p>Thank you for your interest. I'm excited to share our proposal tailored specifically for {{Company}}.</p><p><strong>What we offer:</strong></p><ul><li>Proven results</li><li>Dedicated support</li><li>Competitive pricing</li></ul><p>I'd love to schedule a call to walk you through the details. What does your availability look like this week?</p><p>Best regards,<br>{{SenderName}}</p>`
+    },
+    {
+      id: uid(), name: 'Support Acknowledgement',
+      category: 'Support', format: 'html',
+      subject: 'Re: Your Support Request',
+      body: `<p>Hi {{FirstName}},</p><p>Thank you for reaching out to us. We've received your request and a member of our team will be in touch within 1–2 business days.</p><p>Your reference number is: <strong>[TICKET-ID]</strong></p><p>If you have any urgent concerns, please reply to this email.</p><p>Kind regards,<br>{{SenderName}}</p>`
+    }
+  ];
+  demos.forEach(t => { t.created = Date.now(); t.updated = Date.now(); saveTemplateData(t); });
+}
+
+seedDemoTemplates();
+</script>
+</body>
+</html>
