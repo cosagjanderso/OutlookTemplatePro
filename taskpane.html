@@ -504,7 +504,7 @@
 // ══════════════════════════════════════════
 //  VERSION
 // ══════════════════════════════════════════
-var APP_VERSION = '1.2.0';
+var APP_VERSION = '1.5.0';
 var APP_DATE    = '2026-04-03';
 
 // ══════════════════════════════════════════
@@ -512,9 +512,9 @@ var APP_DATE    = '2026-04-03';
 //  No 32KB limit: individual keys per template
 // ══════════════════════════════════════════
 
-const STORE_PREFIX   = 'tmplpro_t_';
-const CAT_KEY        = 'tmplpro_cats';
-const DEFAULT_CATS   = ['General', 'Sales', 'Support', 'HR', 'Legal', 'Finance', 'Marketing'];
+var STORE_PREFIX   = 'tmplpro_t_';
+var CAT_KEY        = 'tmplpro_cats';
+var DEFAULT_CATS   = ['General', 'Sales', 'Support', 'HR', 'Legal', 'Finance', 'Marketing'];
 
 function getCategories() {
   try { return JSON.parse(localStorage.getItem(CAT_KEY)) || DEFAULT_CATS; }
@@ -523,14 +523,14 @@ function getCategories() {
 function saveCategories(cats) { localStorage.setItem(CAT_KEY, JSON.stringify(cats)); }
 
 function getAllTemplates() {
-  const out = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
+  var out = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
     if (k && k.startsWith(STORE_PREFIX)) {
       try { out.push(JSON.parse(localStorage.getItem(k))); } catch {}
     }
   }
-  return out.sort((a,b) => (b.updated||0)-(a.updated||0));
+  return out.sort(function(a,b) { return (b.updated||0)-(a.updated||0); });
 }
 
 function getTemplate(id) {
@@ -551,15 +551,15 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-let activeTab    = 'browse';
-let filterCat    = 'All';
-let editingId    = null;
-let pendingInsert = null; // { body, format }
+var activeTab    = 'browse';
+var filterCat    = 'All';
+var editingId    = null;
+var pendingInsert = null; // { body, format }
 
 // ══════════════════════════════════════════
 //  OFFICE INIT
 // ══════════════════════════════════════════
-let officeReady = false;
+var officeReady = false;
 
 Office.onReady(function(info) {
   officeReady = true;
@@ -583,12 +583,16 @@ function init() {
 // ══════════════════════════════════════════
 function switchTab(tab) {
   activeTab = tab;
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['browse','editor','settings'][i] === tab);
-  });
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  var tabNames = ['browse','editor','settings'];
+  var tabEls   = document.querySelectorAll('.tab');
+  for (var ti = 0; ti < tabEls.length; ti++) {
+    tabEls[ti].classList.toggle('active', tabNames[ti] === tab);
+  }
+  var panels = document.querySelectorAll('.panel');
+  for (var pi = 0; pi < panels.length; pi++) {
+    panels[pi].classList.remove('active');
+  }
   document.getElementById('panel-' + tab).classList.add('active');
-
   if (tab === 'editor' && !editingId) resetEditor();
   if (tab === 'settings') renderSettings();
 }
@@ -597,11 +601,15 @@ function switchTab(tab) {
 //  BROWSE
 // ══════════════════════════════════════════
 function renderChips() {
-  const cats = ['All', ...getCategories()];
-  const el = document.getElementById('chips-container');
-  el.innerHTML = cats.map(c =>
-    `<button class="chip${filterCat===c?' active':''}" onclick="setCat('${c}')">${c}</button>`
-  ).join('');
+  var cats = ['All'].concat(getCategories());
+  var el   = document.getElementById('chips-container');
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    var c      = cats[i];
+    var active = (filterCat === c) ? ' active' : '';
+    html += '<button class="chip' + active + '" onclick="setCat('' + c + '')">' + c + '</button>';
+  }
+  el.innerHTML = html;
 }
 
 function setCat(cat) {
@@ -611,50 +619,61 @@ function setCat(cat) {
 }
 
 function renderList() {
-  const q = (document.getElementById('search-input')?.value||'').toLowerCase();
-  const templates = getAllTemplates().filter(t => {
-    const matchCat = filterCat === 'All' || t.category === filterCat;
-    const matchQ   = !q || t.name.toLowerCase().includes(q) || (t.body||'').toLowerCase().includes(q);
-    return matchCat && matchQ;
-  });
+  var q = (document.getElementById('search-input') ? document.getElementById('search-input').value : '').toLowerCase();
+  var allTmpl   = getAllTemplates();
+  var templates = [];
+  for (var fi = 0; fi < allTmpl.length; fi++) {
+    var ft       = allTmpl[fi];
+    var matchCat = filterCat === 'All' || ft.category === filterCat;
+    var matchQ   = !q || ft.name.toLowerCase().indexOf(q) !== -1 || (ft.body||'').toLowerCase().indexOf(q) !== -1;
+    if (matchCat && matchQ) templates.push(ft);
+  }
 
-  const el = document.getElementById('template-list');
-  const count = getAllTemplates().length;
+  var el = document.getElementById('template-list');
+  var count = getAllTemplates().length;
   document.getElementById('header-count').textContent = count + ' saved';
 
   if (templates.length === 0) {
-    el.innerHTML = `<div class="empty-state">
-      <div class="icon">📭</div>
-      <p>${count===0?'No templates yet.<br>Click <strong>+ New</strong> to create your first one.':'No templates match your search.'}</p>
-    </div>`;
+    el.innerHTML = '<div class="empty-state">' +
+      '<div class="icon">&#x1F4ED;</div>' +
+      '<p>' + (count === 0 ? 'No templates yet.<br>Click <strong>+ New</strong> to create your first one.' : 'No templates match your search.') + '</p>' +
+      '</div>';
     return;
   }
 
-  el.innerHTML = templates.map(t => {
-    const preview = stripHtml(t.body||'').slice(0,100);
-    const size = formatSize(new Blob([t.body||'']).size);
-    return `<div class="template-card" onclick="insertTemplate('${t.id}')">
-      <div class="card-top">
-        <div class="name">${esc(t.name)}</div>
-        <div class="cat-badge">${esc(t.category||'General')}</div>
-      </div>
-      ${t.subject?`<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">📨 ${esc(t.subject)}</div>`:''}
-      <div class="card-preview">${esc(preview)}</div>
-      <div class="card-footer">
-        <span class="card-size">${size} · ${t.format==='html'?'HTML':'TXT'}</span>
-        <div class="card-actions" onclick="event.stopPropagation()">
-          <button class="btn-icon" onclick="editTemplate('${t.id}')">✏</button>
-          <button class="btn-icon" onclick="duplicateTemplate('${t.id}')">⧉</button>
-          <button class="btn-icon danger" onclick="removeTemplate('${t.id}')">✕</button>
-          <button class="btn-insert" onclick="insertTemplate('${t.id}')">Insert</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  var cardHtml = '';
+  for (var li = 0; li < templates.length; li++) {
+    var tmpl    = templates[li];
+    var preview = esc(stripHtml(tmpl.body || '').slice(0, 100));
+    var size    = formatSize(new Blob([tmpl.body || '']).size);
+    var fmt     = tmpl.format === 'html' ? 'HTML' : 'TXT';
+    var subjRow = tmpl.subject
+      ? '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">&#x1F4E8; ' + esc(tmpl.subject) + '</div>'
+      : '';
+    cardHtml +=
+      '<div class="template-card" onclick="insertTemplate(\'' + tmpl.id + '\')">' +
+        '<div class="card-top">' +
+          '<div class="name">' + esc(tmpl.name) + '</div>' +
+          '<div class="cat-badge">' + esc(tmpl.category || 'General') + '</div>' +
+        '</div>' +
+        subjRow +
+        '<div class="card-preview">' + preview + '</div>' +
+        '<div class="card-footer">' +
+          '<span class="card-size">' + size + ' &middot; ' + fmt + '</span>' +
+          '<div class="card-actions" onclick="event.stopPropagation()">' +
+            '<button class="btn-icon" onclick="editTemplate(\'' + tmpl.id + '\')">&#x270F;</button>' +
+            '<button class="btn-icon" onclick="duplicateTemplate(\'' + tmpl.id + '\')">&#x29C9;</button>' +
+            '<button class="btn-icon danger" onclick="removeTemplate(\'' + tmpl.id + '\')">&#x2715;</button>' +
+            '<button class="btn-insert" onclick="insertTemplate(\'' + tmpl.id + '\')">Insert</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  el.innerHTML = cardHtml;
 }
 
 function stripHtml(html) {
-  const tmp = document.createElement('div');
+  var tmp = document.createElement('div');
   tmp.innerHTML = html;
   return tmp.textContent || tmp.innerText || html;
 }
@@ -673,16 +692,33 @@ function formatSize(bytes) {
 
 // ══════════════════════════════════════════
 //  INSERT TEMPLATE
+//  All code here uses ES5-only syntax for
+//  compatibility with Classic Outlook's
+//  IE-based WebView engine
 // ══════════════════════════════════════════
-const KNOWN_VARS = ['FirstName','LastName','Company','Date','SenderName'];
+
+function extractVars(text) {
+  // Extract all {{VarName}} tokens from a string — ES5 regex loop, no matchAll/spread
+  var found = [];
+  var seen  = {};
+  var re    = /\{\{(\w+)\}\}/g;
+  var match;
+  while ((match = re.exec(text)) !== null) {
+    var name = match[1];
+    if (!seen[name]) {
+      seen[name] = true;
+      found.push(name);
+    }
+  }
+  return found;
+}
 
 function insertTemplate(id) {
-  const t = getTemplate(id);
-  if (!t) return;
+  var t = getTemplate(id);
+  if (!t) { toast('Template not found', 'error'); return; }
 
-  // Detect variables in body and subject
-  const combined = (t.body||'') + (t.subject||'');
-  const vars = [...new Set([...(combined.matchAll(/\{\{(\w+)\}\}/g))].map(m=>m[1]))];
+  var combined = (t.body || '') + (t.subject || '');
+  var vars = extractVars(combined);
 
   if (vars.length > 0) {
     openVarModal(t, vars);
@@ -692,33 +728,45 @@ function insertTemplate(id) {
 }
 
 function openVarModal(t, vars) {
-  pendingInsert = { t, vars };
-  const fieldsEl = document.getElementById('var-fields');
-  fieldsEl.innerHTML = vars.map(v => `
-    <div class="field-group">
-      <label>${v}</label>
-      <input class="field-input" data-var="${v}" type="text" placeholder="${getVarPlaceholder(v)}">
-    </div>
-  `).join('');
+  pendingInsert = { t: t, vars: vars };
+
+  var html = '';
+  for (var i = 0; i < vars.length; i++) {
+    var v = vars[i];
+    html += '<div class="field-group">' +
+              '<label>' + v + '</label>' +
+              '<input class="field-input" data-var="' + v + '" type="text" placeholder="' + getVarPlaceholder(v) + '">' +
+            '</div>';
+  }
+  document.getElementById('var-fields').innerHTML = html;
 
   // Auto-fill Date
-  document.querySelectorAll('#var-fields input[data-var="Date"]').forEach(el => {
-    el.value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  });
+  var dateInputs = document.querySelectorAll('#var-fields input[data-var="Date"]');
+  for (var d = 0; d < dateInputs.length; d++) {
+    dateInputs[d].value = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  }
 
-  // Try to auto-fill SenderName from Office
-  if (officeReady && Office.context?.mailbox?.userProfile?.displayName) {
-    document.querySelectorAll('#var-fields input[data-var="SenderName"]').forEach(el => {
-      el.value = Office.context.mailbox.userProfile.displayName;
-    });
+  // Auto-fill SenderName from Office profile — safe property access without optional chaining
+  if (officeReady && Office.context && Office.context.mailbox &&
+      Office.context.mailbox.userProfile && Office.context.mailbox.userProfile.displayName) {
+    var senderInputs = document.querySelectorAll('#var-fields input[data-var="SenderName"]');
+    for (var s = 0; s < senderInputs.length; s++) {
+      senderInputs[s].value = Office.context.mailbox.userProfile.displayName;
+    }
   }
 
   document.getElementById('var-modal').style.display = 'flex';
 }
 
 function getVarPlaceholder(v) {
-  const map = {FirstName:'John',LastName:'Smith',Company:'Acme Corp',Date:'April 2, 2026',SenderName:'Your Name'};
-  return map[v] || v;
+  var placeholders = {
+    FirstName:  'John',
+    LastName:   'Smith',
+    Company:    'Acme Corp',
+    Date:       'April 3, 2026',
+    SenderName: 'Your Name'
+  };
+  return placeholders[v] || v;
 }
 
 function closeVarModal() {
@@ -727,18 +775,23 @@ function closeVarModal() {
 }
 
 function confirmInsert() {
-  if (!pendingInsert) return;
-  const vals = {};
-  document.querySelectorAll('#var-fields input').forEach(el => {
-    vals[el.dataset.var] = el.value;
-  });
+  if (!pendingInsert) { toast('Nothing to insert', 'error'); return; }
+
+  var vals   = {};
+  var inputs = document.querySelectorAll('#var-fields input');
+  for (var i = 0; i < inputs.length; i++) {
+    var inp = inputs[i];
+    vals[inp.getAttribute('data-var')] = inp.value;
+  }
+
+  var t = pendingInsert.t;
   closeVarModal();
-  doInsert(pendingInsert.t, vals);
+  doInsert(t, vals);
 }
 
 function doInsert(t, vars) {
-  let body    = t.body || '';
-  let subject = t.subject || '';
+  var body    = t.body || '';
+  var subject = t.subject || '';
 
   // Replace variables — using plain for..in loop for IE/legacy WebView compatibility
   var varKeys = Object.keys(vars);
@@ -755,7 +808,7 @@ function doInsert(t, vars) {
     return;
   }
 
-  const item = Office.context.mailbox.item;
+  var item = Office.context.mailbox.item;
 
   // Set subject if template has one and email subject is currently empty
   if (subject && item.subject) {
@@ -830,16 +883,20 @@ function resetEditor() {
 }
 
 function populateCategorySelect() {
-  const sel = document.getElementById('edit-category');
+  var sel = document.getElementById('edit-category');
   if (!sel) return;
-  const cats = getCategories();
-  const cur  = sel.value;
-  sel.innerHTML = cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  var cats = getCategories();
+  var cur  = sel.value;
+  var optHtml = '';
+  for (var oi = 0; oi < cats.length; oi++) {
+    optHtml += '<option value="' + esc(cats[oi]) + '">' + esc(cats[oi]) + '</option>';
+  }
+  sel.innerHTML = optHtml;
   if (cats.includes(cur)) sel.value = cur;
 }
 
 function editTemplate(id) {
-  const t = getTemplate(id);
+  var t = getTemplate(id);
   if (!t) return;
   editingId = id;
   document.getElementById('edit-id').value      = id;
@@ -860,12 +917,12 @@ function cancelEdit() {
 }
 
 function saveTemplate() {
-  const name = document.getElementById('edit-name').value.trim();
-  const body = document.getElementById('edit-body').value;
+  var name = document.getElementById('edit-name').value.trim();
+  var body = document.getElementById('edit-body').value;
   if (!name) { toast('Please enter a template name', 'error'); return; }
   if (!body.trim()) { toast('Template body is empty', 'error'); return; }
 
-  const id = editingId || uid();
+  var id = editingId || uid();
   saveTemplateData({
     id,
     name,
@@ -873,7 +930,7 @@ function saveTemplate() {
     subject:  document.getElementById('edit-subject').value.trim(),
     format:   document.getElementById('edit-format').value,
     body,
-    created:  editingId ? (getTemplate(id)?.created || Date.now()) : Date.now()
+    created:  editingId ? (getTemplate(id) && getTemplate(id).created ? getTemplate(id).created : Date.now()) : Date.now()
   });
 
   toast(editingId ? 'Template updated ✓' : 'Template saved ✓', 'success');
@@ -884,7 +941,7 @@ function saveTemplate() {
 }
 
 function duplicateTemplate(id) {
-  const t = getTemplate(id);
+  var t = getTemplate(id);
   if (!t) return;
   saveTemplateData({ ...t, id: uid(), name: t.name + ' (copy)', created: Date.now() });
   renderList();
@@ -898,10 +955,12 @@ function removeTemplate(id) {
 }
 
 function updateCharCount() {
-  const val = document.getElementById('edit-body')?.value||'';
-  const bytes = new Blob([val]).size;
-  const el = document.getElementById('char-counter');
-  el.textContent = `${val.length.toLocaleString()} chars · ${formatSize(bytes)}`;
+  var bodyEl = document.getElementById('edit-body');
+  var bodyEl = document.getElementById('edit-body');
+  var val = bodyEl ? bodyEl.value : '';
+  var bytes = new Blob([val]).size;
+  var el = document.getElementById('char-counter');
+  el.textContent = val.length.toLocaleString() + ' chars - ' + formatSize(bytes);
   el.classList.toggle('warn', bytes > 500*1024); // warn at 500KB
 }
 
@@ -909,9 +968,12 @@ function updateCharCount() {
 //  SETTINGS
 // ══════════════════════════════════════════
 function renderSettings() {
-  const templates = getAllTemplates();
-  const cats = getCategories();
-  const totalBytes = templates.reduce((s,t)=>s+new Blob([t.body||'']).size,0);
+  var templates  = getAllTemplates();
+  var cats       = getCategories();
+  var totalBytes = 0;
+  for (var ri = 0; ri < templates.length; ri++) {
+    totalBytes += new Blob([templates[ri].body || '']).size;
+  }
 
   document.getElementById('stats-grid').innerHTML =
     '<div class="stat-card"><div class="val">' + templates.length + '</div><div class="lbl">Templates</div></div>' +
@@ -921,20 +983,24 @@ function renderSettings() {
   document.getElementById('version-stamp').innerHTML =
     'Version ' + APP_VERSION + ' &nbsp;&middot;&nbsp; ' + APP_DATE;
 
-  document.getElementById('cat-list').innerHTML = cats.map((c,i) =>
-    `<div class="cat-item">
-      <span>${esc(c)}</span>
-      <button class="btn-icon danger" onclick="removeCategory(${i})">✕</button>
-    </div>`
-  ).join('');
+  var catHtml = '';
+  for (var ci = 0; ci < cats.length; ci++) {
+    catHtml += '<div class="cat-item">' +
+      '<span>' + esc(cats[ci]) + '</span>' +
+      '<button class="btn-icon danger" onclick="removeCategory(' + ci + ')">&#x2715;</button>' +
+      '</div>';
+  }
+  document.getElementById('cat-list').innerHTML = catHtml;
 }
 
 function addCategory() {
-  const inp = document.getElementById('new-cat-input');
-  const val = inp.value.trim();
+  var inp  = document.getElementById('new-cat-input');
+  var val  = inp.value.trim();
   if (!val) return;
-  const cats = getCategories();
-  if (cats.includes(val)) { toast('Category already exists', 'error'); return; }
+  var cats = getCategories();
+  for (var ai = 0; ai < cats.length; ai++) {
+    if (cats[ai] === val) { toast('Category already exists', 'error'); return; }
+  }
   cats.push(val);
   saveCategories(cats);
   inp.value = '';
@@ -945,7 +1011,7 @@ function addCategory() {
 }
 
 function removeCategory(i) {
-  const cats = getCategories();
+  var cats = getCategories();
   cats.splice(i, 1);
   saveCategories(cats);
   renderSettings();
@@ -955,39 +1021,52 @@ function removeCategory(i) {
 }
 
 function exportTemplates() {
-  const data = {
-    version: 1,
-    exported: new Date().toISOString(),
+  var data = {
+    version:    1,
+    exported:   new Date().toISOString(),
     categories: getCategories(),
-    templates: getAllTemplates()
+    templates:  getAllTemplates()
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'template-pro-export.json'; a.click();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url;
+  a.download = 'template-pro-export.json';
+  a.click();
   URL.revokeObjectURL(url);
   toast('Exported successfully', 'success');
 }
 
 function importTemplates(e) {
-  const file = e.target.files[0];
+  var file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
     try {
-      const data = JSON.parse(ev.target.result);
-      let count = 0;
+      var data = JSON.parse(ev.target.result);
+      var count = 0;
       if (Array.isArray(data.templates)) {
-        data.templates.forEach(t => { if (t.id && t.name) { saveTemplateData(t); count++; } });
+        for (var ii = 0; ii < data.templates.length; ii++) {
+          var tmpl = data.templates[ii];
+          if (tmpl.id && tmpl.name) { saveTemplateData(tmpl); count++; }
+        }
       }
       if (Array.isArray(data.categories)) {
-        const existing = getCategories();
-        const merged = [...new Set([...existing, ...data.categories])];
+        var existing = getCategories();
+        var merged   = existing.slice();
+        for (var mi = 0; mi < data.categories.length; mi++) {
+          var mc = data.categories[mi];
+          var found = false;
+          for (var mj = 0; mj < merged.length; mj++) {
+            if (merged[mj] === mc) { found = true; break; }
+          }
+          if (!found) merged.push(mc);
+        }
         saveCategories(merged);
       }
       renderList(); renderSettings(); renderChips(); populateCategorySelect();
-      toast(`Imported ${count} templates`, 'success');
-    } catch {
+      toast('Imported ' + count + ' templates', 'success');
+    } catch(parseErr) {
       toast('Invalid JSON file', 'error');
     }
     e.target.value = '';
@@ -997,12 +1076,12 @@ function importTemplates(e) {
 
 function clearAll() {
   if (!confirm('Delete ALL templates? This cannot be undone.')) return;
-  const keys = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
+  var keys = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
     if (k && k.startsWith(STORE_PREFIX)) keys.push(k);
   }
-  keys.forEach(k => localStorage.removeItem(k));
+  for (var ki = 0; ki < keys.length; ki++) { localStorage.removeItem(keys[ki]); }
   renderList(); renderSettings();
   toast('All templates deleted', 'success');
 }
@@ -1010,13 +1089,13 @@ function clearAll() {
 // ══════════════════════════════════════════
 //  TOAST
 // ══════════════════════════════════════════
-let toastTimer;
+var toastTimer;
 function toast(msg, type='success') {
-  const el = document.getElementById('toast');
+  var el = document.getElementById('toast');
   el.textContent = msg;
   el.className   = 'show ' + type;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2400);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2400);
 }
 
 // ══════════════════════════════════════════
