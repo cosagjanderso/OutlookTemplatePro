@@ -747,25 +747,61 @@ function doInsert(t, vars) {
 
   const item = Office.context.mailbox.item;
 
-  // Set subject if provided
+  // Set subject if template has one and email subject is currently empty
   if (subject && item.subject) {
-    item.subject.getAsync(r => {
-      if (!r.value) item.subject.setAsync(subject);
+    item.subject.getAsync(function(r) {
+      if (r.status === Office.AsyncResultStatus.Succeeded && !r.value) {
+        item.subject.setAsync(subject);
+      }
     });
   }
 
-  // Insert body
-  const insertType = t.format === 'html'
-    ? Office.CoercionType.Html
-    : Office.CoercionType.Text;
-
-  item.body.setSelectedDataAsync(body, { coercionType: insertType }, result => {
-    if (result.status === Office.AsyncResultStatus.Succeeded) {
-      toast('Template inserted ✓', 'success');
-      switchTab('browse');
-    } else {
-      toast('Insert failed: ' + result.error?.message, 'error');
+  // Detect the current body type first, then insert accordingly.
+  // Classic Outlook silently fails if you insert HTML into a plain-text compose window.
+  item.body.getTypeAsync(function(typeResult) {
+    if (typeResult.status !== Office.AsyncResultStatus.Succeeded) {
+      // Fallback: can't detect type, insert as plain text
+      item.body.prependAsync('\n' + stripHtml(body), { coercionType: Office.CoercionType.Text }, function(r) {
+        if (r.status === Office.AsyncResultStatus.Succeeded) {
+          toast('Template inserted ✓', 'success');
+          switchTab('browse');
+        } else {
+          toast('Insert failed: ' + (r.error ? r.error.message : 'Unknown error'), 'error');
+        }
+      });
+      return;
     }
+
+    var bodyType = typeResult.value;
+    var insertContent;
+    var coercionType;
+
+    if (bodyType === Office.MailboxEnums.BodyType.Html) {
+      insertContent = t.format === 'html' ? body : '<p>' + body.replace(/\n/g, '<br>') + '</p>';
+      coercionType  = Office.CoercionType.Html;
+    } else {
+      insertContent = stripHtml(body);
+      coercionType  = Office.CoercionType.Text;
+    }
+
+    // prependAsync is more reliable than setSelectedDataAsync in Classic Outlook
+    // as it does not require the cursor to be positioned in the body first
+    item.body.prependAsync(insertContent, { coercionType: coercionType }, function(result) {
+      if (result.status === Office.AsyncResultStatus.Succeeded) {
+        toast('Template inserted ✓', 'success');
+        switchTab('browse');
+      } else {
+        // Final fallback: replace entire body
+        item.body.setAsync(insertContent, { coercionType: coercionType }, function(r2) {
+          if (r2.status === Office.AsyncResultStatus.Succeeded) {
+            toast('Template inserted ✓', 'success');
+            switchTab('browse');
+          } else {
+            toast('Insert failed: ' + (r2.error ? r2.error.message : 'Unknown error'), 'error');
+          }
+        });
+      }
+    });
   });
 }
 
