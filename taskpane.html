@@ -1012,34 +1012,43 @@ function toast(msg, type='success') {
 //  SEED DEMO TEMPLATES (first run)
 // ══════════════════════════════════════════
 function seedDemoTemplates() {
-  if (getAllTemplates().length > 0) return;
-  const demos = [
+  // Re-seed if demos were saved before v1.1 fix (removes broken backtick templates)
+  var SEED_VERSION = 'v1.1';
+  if (localStorage.getItem('tmplpro_seed') === SEED_VERSION) return;
+  // Clear any previously seeded demo templates
+  getAllTemplates().forEach(function(t) {
+    if (['Professional Introduction','Meeting Follow-Up','Sales Proposal','Support Acknowledgement'].indexOf(t.name) !== -1) {
+      deleteTemplateData(t.id);
+    }
+  });
+  var demos = [
     {
       id: uid(), name: 'Professional Introduction',
       category: 'General', format: 'html',
-      subject: 'Introduction – {{SenderName}}',
-      body: `<p>Dear {{FirstName}},</p><p>My name is {{SenderName}} and I'm reaching out to introduce myself. I hope this message finds you well.</p><p>I would love to connect and explore opportunities to collaborate with {{Company}}.</p><p>Best regards,<br>{{SenderName}}</p>`
+      subject: 'Introduction - {{SenderName}}',
+      body: '<p>Dear {{FirstName}},</p><p>My name is {{SenderName}} and I am reaching out to introduce myself. I hope this message finds you well.</p><p>I would love to connect and explore opportunities to collaborate with {{Company}}.</p><p>Best regards,<br>{{SenderName}}</p>'
     },
     {
       id: uid(), name: 'Meeting Follow-Up',
       category: 'General', format: 'html',
-      subject: 'Following Up on Our Meeting – {{Date}}',
-      body: `<p>Hi {{FirstName}},</p><p>Thank you for taking the time to meet with me on {{Date}}. It was a pleasure discussing how we can support {{Company}}.</p><p>As promised, I'll send over the details we discussed. Please don't hesitate to reach out with any questions.</p><p>Looking forward to our next steps!</p><p>Best,<br>{{SenderName}}</p>`
+      subject: 'Following Up on Our Meeting - {{Date}}',
+      body: '<p>Hi {{FirstName}},</p><p>Thank you for taking the time to meet with me on {{Date}}. It was a pleasure discussing how we can support {{Company}}.</p><p>As promised, I will send over the details we discussed. Please do not hesitate to reach out with any questions.</p><p>Looking forward to our next steps!</p><p>Best,<br>{{SenderName}}</p>'
     },
     {
       id: uid(), name: 'Sales Proposal',
       category: 'Sales', format: 'html',
       subject: 'Proposal for {{Company}}',
-      body: `<p>Dear {{FirstName}},</p><p>Thank you for your interest. I'm excited to share our proposal tailored specifically for {{Company}}.</p><p><strong>What we offer:</strong></p><ul><li>Proven results</li><li>Dedicated support</li><li>Competitive pricing</li></ul><p>I'd love to schedule a call to walk you through the details. What does your availability look like this week?</p><p>Best regards,<br>{{SenderName}}</p>`
+      body: '<p>Dear {{FirstName}},</p><p>Thank you for your interest. I am excited to share our proposal tailored specifically for {{Company}}.</p><p><strong>What we offer:</strong></p><ul><li>Proven results</li><li>Dedicated support</li><li>Competitive pricing</li></ul><p>I would love to schedule a call to walk you through the details. What does your availability look like this week?</p><p>Best regards,<br>{{SenderName}}</p>'
     },
     {
       id: uid(), name: 'Support Acknowledgement',
       category: 'Support', format: 'html',
       subject: 'Re: Your Support Request',
-      body: `<p>Hi {{FirstName}},</p><p>Thank you for reaching out to us. We've received your request and a member of our team will be in touch within 1–2 business days.</p><p>Your reference number is: <strong>[TICKET-ID]</strong></p><p>If you have any urgent concerns, please reply to this email.</p><p>Kind regards,<br>{{SenderName}}</p>`
+      body: '<p>Hi {{FirstName}},</p><p>Thank you for reaching out to us. We have received your request and a member of our team will be in touch within 1-2 business days.</p><p>Your reference number is: <strong>[TICKET-ID]</strong></p><p>If you have any urgent concerns, please reply to this email.</p><p>Kind regards,<br>{{SenderName}}</p>'
     }
   ];
-  demos.forEach(t => { t.created = Date.now(); t.updated = Date.now(); saveTemplateData(t); });
+  demos.forEach(function(t) { t.created = Date.now(); t.updated = Date.now(); saveTemplateData(t); });
+  localStorage.setItem('tmplpro_seed', SEED_VERSION);
 }
 
 seedDemoTemplates();
