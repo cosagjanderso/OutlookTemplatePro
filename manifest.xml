@@ -8,15 +8,14 @@
 
   <Id>415281cc-85d1-438d-95fe-3f3217acfdb5</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Your Organization</ProviderName>
+  <ProviderName>Cosco</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Template Pro"/>
-  <Description DefaultValue="Unlimited email templates for Outlook store, manage, and insert rich templates with no size restrictions."/>
+  <Description DefaultValue="Unlimited email templates for Outlook."/>
   <IconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-128.png"/>
-  <SupportUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/support"/>
   <AppDomains>
-    <AppDomain>https://cosagjanderso.github.io/</AppDomain>
+    <AppDomain>https://cosagjanderso.github.io</AppDomain>
   </AppDomains>
 
   <Hosts>
