@@ -454,6 +454,7 @@
       <div class="settings-section">
         <h3>Storage</h3>
         <div class="stats-grid" id="stats-grid"></div>
+        <div id="version-stamp" style="margin-top:8px;font-size:10px;color:var(--text-dim);font-family:var(--mono);text-align:right;"></div>
       </div>
 
       <div class="settings-section">
@@ -500,6 +501,12 @@
 </div>
 
 <script>
+// ══════════════════════════════════════════
+//  VERSION
+// ══════════════════════════════════════════
+var APP_VERSION = '1.2.0';
+var APP_DATE    = '2026-04-03';
+
 // ══════════════════════════════════════════
 //  STORAGE — uses localStorage with JSON
 //  No 32KB limit: individual keys per template
@@ -733,12 +740,15 @@ function doInsert(t, vars) {
   let body    = t.body || '';
   let subject = t.subject || '';
 
-  // Replace variables
-  Object.entries(vars).forEach(([k,v]) => {
-    const re = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
-    body    = body.replace(re, v);
-    subject = subject.replace(re, v);
-  });
+  // Replace variables — using plain for..in loop for IE/legacy WebView compatibility
+  var varKeys = Object.keys(vars);
+  for (var vi = 0; vi < varKeys.length; vi++) {
+    var vk = varKeys[vi];
+    var vv = vars[vk];
+    var re = new RegExp('\\{\\{' + vk + '\\}\\}', 'g');
+    body    = body.replace(re, vv);
+    subject = subject.replace(re, vv);
+  }
 
   if (!officeReady) {
     toast('Inserted! (preview mode)', 'success');
@@ -903,12 +913,13 @@ function renderSettings() {
   const cats = getCategories();
   const totalBytes = templates.reduce((s,t)=>s+new Blob([t.body||'']).size,0);
 
-  document.getElementById('stats-grid').innerHTML = `
-    <div class="stat-card"><div class="val">${templates.length}</div><div class="lbl">Templates</div></div>
-    <div class="stat-card"><div class="val">${cats.length}</div><div class="lbl">Categories</div></div>
-    <div class="stat-card"><div class="val">${formatSize(totalBytes)}</div><div class="lbl">Total Size</div></div>
-    <div class="stat-card"><div class="val">∞</div><div class="lbl">No Limit</div></div>
-  `;
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="stat-card"><div class="val">' + templates.length + '</div><div class="lbl">Templates</div></div>' +
+    '<div class="stat-card"><div class="val">' + cats.length + '</div><div class="lbl">Categories</div></div>' +
+    '<div class="stat-card"><div class="val">' + formatSize(totalBytes) + '</div><div class="lbl">Total Size</div></div>' +
+    '<div class="stat-card"><div class="val">&#x221E;</div><div class="lbl">No Limit</div></div>';
+  document.getElementById('version-stamp').innerHTML =
+    'Version ' + APP_VERSION + ' &nbsp;&middot;&nbsp; ' + APP_DATE;
 
   document.getElementById('cat-list').innerHTML = cats.map((c,i) =>
     `<div class="cat-item">
