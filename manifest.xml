@@ -16,7 +16,7 @@
   <HighResolutionIconUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/icon-128.png"/>
   <SupportUrl DefaultValue="https://cosagjanderso.github.io/OutlookTemplatePro/support"/>
   <AppDomains>
-    <AppDomain>https://cosagjanderso.github.io</AppDomain>
+    <AppDomain>https://cosagjanderso.github.io/OutlookTemplatePro</AppDomain>
   </AppDomains>
 
   <Hosts>
