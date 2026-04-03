@@ -607,7 +607,7 @@ function renderChips() {
   for (var i = 0; i < cats.length; i++) {
     var c      = cats[i];
     var active = (filterCat === c) ? ' active' : '';
-    html += '<button class="chip' + active + '" onclick="setCat('' + c + '')">' + c + '</button>';
+    html += '<button class="chip' + active + '" onclick="setCat(\'' + c + '\')">' + c + '</button>';
   }
   el.innerHTML = html;
 }
