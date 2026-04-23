@@ -585,6 +585,105 @@
       padding: 1px 5px; border-radius: 4px;
       color: var(--accent);
     }
+
+    /* ── VARIABLE MANAGER ── */
+    .var-list { display: flex; flex-direction: column; gap: 6px; }
+    .var-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .var-item-top {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .var-token {
+      font-family: var(--mono); font-size: 10.5px;
+      background: rgba(79,124,255,.15);
+      color: var(--accent);
+      border: 1px solid rgba(79,124,255,.25);
+      border-radius: 4px;
+      padding: 2px 7px;
+      flex-shrink: 0;
+    }
+    .var-desc {
+      font-size: 11px; color: var(--text-muted);
+      flex: 1;
+    }
+    .var-item-row {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .var-default-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11.5px;
+      padding: 5px 8px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .var-default-input:focus { border-color: var(--accent); }
+    .var-default-input::placeholder { color: var(--text-dim); }
+    .var-save-btn {
+      padding: 5px 10px;
+      border-radius: var(--radius);
+      background: rgba(79,124,255,.15);
+      border: 1px solid rgba(79,124,255,.3);
+      color: var(--accent);
+      font-size: 11px; font-weight: 500;
+      cursor: pointer; white-space: nowrap;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .var-save-btn:hover { background: rgba(79,124,255,.28); }
+    .var-delete-btn {
+      padding: 5px 8px;
+      border-radius: var(--radius);
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px; cursor: pointer;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .var-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .var-auto-tag {
+      font-size: 10px; color: var(--success);
+      font-family: var(--mono);
+      background: rgba(45,217,126,.1);
+      border: 1px solid rgba(45,217,126,.25);
+      border-radius: 4px; padding: 1px 6px;
+    }
+    .var-prompt-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .var-prompt-toggle input[type=checkbox] { cursor: pointer; }
+    .var-new-row { display: flex; gap: 6px; margin-top: 4px; }
+    .var-new-row input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      padding: 6px 10px;
+      outline: none;
+    }
+    .var-new-row input:focus { border-color: var(--accent); }
+    .var-section-note {
+      font-size: 10.5px; color: var(--text-muted);
+      line-height: 1.6; margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -745,7 +844,7 @@
       </div>
 
       <div class="vars-hint">
-        <p>&#x1F4A1; Variables: <code>{{FirstName}}</code> <code>{{LastName}}</code> <code>{{Company}}</code> <code>{{Date}}</code> <code>{{SenderName}}</code> — prompted at insert time.</p>
+        <p>&#x1F4A1; Use <code>{{VariableName}}</code> anywhere in the body or subject. Set default values in <strong>Settings &#x2192; Variables</strong> to skip the prompt at insert time.</p>
       </div>
     </div>
     <div class="editor-footer">
@@ -780,6 +879,18 @@
             ⬆ Import templates from JSON
             <input type="file" accept=".json" id="import-file" style="display:none" onchange="importTemplates(event)">
           </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Variables</h3>
+        <p class="var-section-note">
+          Set default values for variables used in templates. Variables with a default value are inserted automatically — no prompt. Check <strong>Always ask</strong> to be prompted even when a default is set.
+        </p>
+        <div class="var-list" id="var-list"></div>
+        <div class="var-new-row" style="margin-top:8px">
+          <input type="text" id="new-var-input" placeholder="NewVariableName (no spaces)" onkeydown="if(event.keyCode===13)addVariable()">
+          <button class="btn-add-cat" onclick="addVariable()">Add</button>
         </div>
       </div>
 
@@ -828,7 +939,7 @@
 // ══════════════════════════════════════════
 //  VERSION
 // ══════════════════════════════════════════
-var APP_VERSION = '1.7.0';
+var APP_VERSION = '1.8.0';
 var APP_DATE    = '2026-04-04';
 
 // ══════════════════════════════════════════
@@ -879,6 +990,227 @@ var activeTab    = 'browse';
 var filterCat    = 'All';
 var editingId    = null;
 var pendingInsert = null; // { body, format }
+
+// ══════════════════════════════════════════
+//  VARIABLES MANAGEMENT
+// ══════════════════════════════════════════
+var VARS_KEY = 'tmplpro_vars';
+
+// Built-in variables with descriptions and auto-fill logic
+var BUILTIN_VARS = {
+  FirstName:  { desc: 'Recipient first name',   auto: false },
+  LastName:   { desc: 'Recipient last name',     auto: false },
+  Company:    { desc: 'Recipient company',        auto: false },
+  Date:       { desc: 'Current date',             auto: true  },
+  SenderName: { desc: 'Your display name',        auto: true  }
+};
+
+function getVarDefs() {
+  try {
+    var stored = JSON.parse(localStorage.getItem(VARS_KEY));
+    if (stored && typeof stored === 'object') return stored;
+  } catch(e) {}
+  // Default: all built-ins with empty defaults, always-ask off
+  var defs = {};
+  var keys = Object.keys(BUILTIN_VARS);
+  for (var i = 0; i < keys.length; i++) {
+    defs[keys[i]] = { defaultVal: '', alwaysAsk: false };
+  }
+  return defs;
+}
+
+function saveVarDefs(defs) {
+  localStorage.setItem(VARS_KEY, JSON.stringify(defs));
+}
+
+function getAutoValue(name) {
+  // Returns an auto-computed value for built-in auto vars, else null
+  if (name === 'Date') {
+    return new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  }
+  if (name === 'SenderName') {
+    if (officeReady && Office.context && Office.context.mailbox &&
+        Office.context.mailbox.userProfile && Office.context.mailbox.userProfile.displayName) {
+      return Office.context.mailbox.userProfile.displayName;
+    }
+    return '';
+  }
+  return null;
+}
+
+function renderVarList() {
+  var defs    = getVarDefs();
+  var names   = Object.keys(defs);
+  var builtinOrder = ['FirstName','LastName','Company','Date','SenderName'];
+  var sorted  = [];
+  for (var bi = 0; bi < builtinOrder.length; bi++) {
+    if (defs[builtinOrder[bi]] !== undefined) sorted.push(builtinOrder[bi]);
+  }
+  for (var ni = 0; ni < names.length; ni++) {
+    if (sorted.indexOf(names[ni]) === -1) sorted.push(names[ni]);
+  }
+
+  var container = document.getElementById('var-list');
+  container.innerHTML = '';
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<p style="font-size:11px;color:var(--text-muted)">No variables defined yet.</p>';
+    return;
+  }
+
+  for (var si = 0; si < sorted.length; si++) {
+    var name    = sorted[si];
+    var def     = defs[name];
+    var builtin = BUILTIN_VARS[name];
+    var isAuto  = builtin && builtin.auto;
+    var desc    = builtin ? builtin.desc : 'Custom variable';
+
+    var item = document.createElement('div');
+    item.className = 'var-item';
+
+    var topRow = document.createElement('div');
+    topRow.className = 'var-item-top';
+    var tokenEl = document.createElement('span');
+    tokenEl.className = 'var-token';
+    tokenEl.textContent = '{{' + name + '}}';
+    var descEl = document.createElement('span');
+    descEl.className = 'var-desc';
+    descEl.textContent = desc;
+    topRow.appendChild(tokenEl);
+    topRow.appendChild(descEl);
+    if (isAuto) {
+      var autoTag = document.createElement('span');
+      autoTag.className = 'var-auto-tag';
+      autoTag.textContent = 'auto';
+      topRow.appendChild(autoTag);
+    }
+    item.appendChild(topRow);
+
+    var inputRow = document.createElement('div');
+    inputRow.className = 'var-item-row';
+
+    var inp = document.createElement('input');
+    inp.className = 'var-default-input';
+    inp.id = 'vdef_' + name;
+    inp.type = 'text';
+    inp.value = def.defaultVal || '';
+    inp.placeholder = isAuto ? 'Leave blank to use auto value' : 'Default value (optional)';
+    (function(n) {
+      inp.onkeydown = function(e) { if ((e.keyCode || e.which) === 13) saveVarDefault(n); };
+    }(name));
+    inputRow.appendChild(inp);
+
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'var-save-btn';
+    saveBtn.textContent = 'Save';
+    (function(n) { saveBtn.onclick = function() { saveVarDefault(n); }; }(name));
+    inputRow.appendChild(saveBtn);
+
+    if (!builtin) {
+      var delBtn = document.createElement('button');
+      delBtn.className = 'var-delete-btn';
+      delBtn.innerHTML = '&#x2715;';
+      (function(n) { delBtn.onclick = function() { deleteVar(n); }; }(name));
+      inputRow.appendChild(delBtn);
+    }
+    item.appendChild(inputRow);
+
+    var lbl = document.createElement('label');
+    lbl.className = 'var-prompt-toggle';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.id = 'vask_' + name;
+    chk.checked = !!def.alwaysAsk;
+    (function(n) { chk.onchange = function() { saveVarAsk(n, this.checked); }; }(name));
+    lbl.appendChild(chk);
+    lbl.appendChild(document.createTextNode(' Always ask for this variable'));
+    item.appendChild(lbl);
+
+    container.appendChild(item);
+  }
+}
+
+function saveVarDefault(name) {
+  var inp  = document.getElementById('vdef_' + name);
+  if (!inp) return;
+  var defs = getVarDefs();
+  if (!defs[name]) defs[name] = { defaultVal: '', alwaysAsk: false };
+  defs[name].defaultVal = inp.value.trim();
+  saveVarDefs(defs);
+  toast('Default saved for {{' + name + '}}', 'success');
+}
+
+function saveVarAsk(name, val) {
+  var defs = getVarDefs();
+  if (!defs[name]) defs[name] = { defaultVal: '', alwaysAsk: false };
+  defs[name].alwaysAsk = val;
+  saveVarDefs(defs);
+}
+
+function addVariable() {
+  var inp  = document.getElementById('new-var-input');
+  var name = inp.value.trim().replace(/\s+/g, '');
+  if (!name) return;
+  // Validate: letters/numbers only, start with letter
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(name)) {
+    toast('Variable name: letters/numbers only, start with a letter', 'error');
+    return;
+  }
+  var defs = getVarDefs();
+  if (defs[name] !== undefined) { toast('Variable already exists', 'error'); return; }
+  defs[name] = { defaultVal: '', alwaysAsk: false };
+  saveVarDefs(defs);
+  inp.value = '';
+  renderVarList();
+  toast('Variable {{' + name + '}} added', 'success');
+}
+
+function deleteVar(name) {
+  if (!confirm('Delete variable {{' + name + '}}?')) return;
+  var defs = getVarDefs();
+  delete defs[name];
+  saveVarDefs(defs);
+  renderVarList();
+  toast('Variable deleted', 'success');
+}
+
+// Resolve variable values at insert time using saved defaults
+// Returns { vals: {name:value}, needsPrompt: [names that still need prompting] }
+function resolveVars(varNames) {
+  var defs       = getVarDefs();
+  var vals       = {};
+  var needsPrompt = [];
+
+  for (var i = 0; i < varNames.length; i++) {
+    var name = varNames[i];
+    var def  = defs[name] || { defaultVal: '', alwaysAsk: false };
+
+    if (def.alwaysAsk) {
+      // Always prompt regardless of default
+      needsPrompt.push(name);
+      continue;
+    }
+
+    // Check for auto value first
+    var autoVal = getAutoValue(name);
+    if (autoVal !== null && autoVal !== '') {
+      // Auto var: use auto value unless user has overridden with a custom default
+      vals[name] = (def.defaultVal && def.defaultVal !== '') ? def.defaultVal : autoVal;
+      continue;
+    }
+
+    // Has a saved default — use it
+    if (def.defaultVal && def.defaultVal !== '') {
+      vals[name] = def.defaultVal;
+      continue;
+    }
+
+    // No default, no auto — needs prompt
+    needsPrompt.push(name);
+  }
+
+  return { vals: vals, needsPrompt: needsPrompt };
+}
 
 // ══════════════════════════════════════════
 //  THEME
@@ -1074,41 +1406,54 @@ function insertTemplate(id) {
   var combined = (t.body || '') + (t.subject || '');
   var vars = extractVars(combined);
 
-  if (vars.length > 0) {
-    openVarModal(t, vars);
-  } else {
+  if (vars.length === 0) {
     doInsert(t, {});
+    return;
+  }
+
+  // Resolve defaults — only prompt for vars without a saved default
+  var resolved    = resolveVars(vars);
+  var needsPrompt = resolved.needsPrompt;
+
+  if (needsPrompt.length === 0) {
+    // All variables resolved — insert immediately, no prompt
+    doInsert(t, resolved.vals);
+  } else {
+    // Open modal only for unresolved vars, pre-fill resolved ones
+    openVarModal(t, vars, resolved.vals);
   }
 }
 
-function openVarModal(t, vars) {
-  pendingInsert = { t: t, vars: vars };
+function openVarModal(t, vars, preFilled) {
+  preFilled = preFilled || {};
+  pendingInsert = { t: t, vars: vars, preFilled: preFilled };
 
+  // Only show fields for vars that need prompting
+  // (preFilled contains values already resolved from defaults)
+  var defs = getVarDefs();
   var html = '';
   for (var i = 0; i < vars.length; i++) {
-    var v = vars[i];
-    html += '<div class="field-group">' +
-              '<label>' + v + '</label>' +
-              '<input class="field-input" data-var="' + v + '" type="text" placeholder="' + getVarPlaceholder(v) + '">' +
-            '</div>';
-  }
-  document.getElementById('var-fields').innerHTML = html;
-
-  // Auto-fill Date
-  var dateInputs = document.querySelectorAll('#var-fields input[data-var="Date"]');
-  for (var d = 0; d < dateInputs.length; d++) {
-    dateInputs[d].value = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
-  }
-
-  // Auto-fill SenderName from Office profile — safe property access without optional chaining
-  if (officeReady && Office.context && Office.context.mailbox &&
-      Office.context.mailbox.userProfile && Office.context.mailbox.userProfile.displayName) {
-    var senderInputs = document.querySelectorAll('#var-fields input[data-var="SenderName"]');
-    for (var s = 0; s < senderInputs.length; s++) {
-      senderInputs[s].value = Office.context.mailbox.userProfile.displayName;
+    var v      = vars[i];
+    var def    = defs[v] || { defaultVal: '', alwaysAsk: false };
+    var preVal = preFilled[v] || '';
+    // Show this field if: alwaysAsk is true, OR no pre-filled value
+    if (!preFilled[v] || def.alwaysAsk) {
+      html += '<div class="field-group">' +
+                '<label>' + v + '</label>' +
+                '<input class="field-input" data-var="' + v + '" type="text"' +
+                  ' value="' + esc(preVal) + '"' +
+                  ' placeholder="' + getVarPlaceholder(v) + '">' +
+              '</div>';
     }
   }
 
+  if (html === '') {
+    // Nothing to prompt — shouldn't reach here but just in case
+    confirmInsert();
+    return;
+  }
+
+  document.getElementById('var-fields').innerHTML = html;
   document.getElementById('var-modal').style.display = 'flex';
 }
 
@@ -1131,7 +1476,14 @@ function closeVarModal() {
 function confirmInsert() {
   if (!pendingInsert) { toast('Nothing to insert', 'error'); return; }
 
+  // Start with pre-filled defaults, then overlay any prompt values
   var vals   = {};
+  var pf     = pendingInsert.preFilled || {};
+  var pfKeys = Object.keys(pf);
+  for (var pi = 0; pi < pfKeys.length; pi++) {
+    vals[pfKeys[pi]] = pf[pfKeys[pi]];
+  }
+  // Overlay anything entered in the modal
   var inputs = document.querySelectorAll('#var-fields input');
   for (var i = 0; i < inputs.length; i++) {
     var inp = inputs[i];
@@ -1422,6 +1774,7 @@ function renderSettings() {
   // Re-apply theme active state now that buttons are rendered
   var currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
   applyTheme(currentTheme);
+  renderVarList();
   var templates  = getAllTemplates();
   var cats       = getCategories();
   var totalBytes = 0;
